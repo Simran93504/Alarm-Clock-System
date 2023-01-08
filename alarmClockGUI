@@ -1,0 +1,107 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QHBoxLayout, QVBoxLayout
+from PyQt5.QtCore import QTimer
+from datetime import datetime, timedelta
+import pygame
+from tkinter import messagebox  
+
+
+class AlarmClock(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.alarm_time = None
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.check_alarm)
+        
+        pygame.mixer.init()
+        self.sound = pygame.mixer.Sound('alarm.wav')
+        self.initUI()
+
+    def initUI(self):
+       self.time_label = QLabel('Enter time (HH:MM):', self)
+       self.time_edit = QLineEdit(self)
+       self.set_button = QPushButton('Set Alarm', self)
+       self.set_button.clicked.connect(self.set_alarm)
+       self.clear_button = QPushButton('Stop Alarm', self)
+       self.clear_button.clicked.connect(self.clear_alarm)
+       self.snooze_button = QPushButton('Snooze', self)
+       self.snooze_button.clicked.connect(self.snooze)
+       self.snooze_button.setEnabled(False)
+      
+
+       hbox = QHBoxLayout()
+       hbox.addWidget(self.time_label)
+       hbox.addWidget(self.time_edit)
+
+       vbox = QVBoxLayout()
+       vbox.addLayout(hbox)
+       vbox.addWidget(self.set_button)
+       vbox.addWidget(self.clear_button)
+       vbox.addWidget(self.snooze_button)
+       self.setLayout(vbox)
+
+       self.timer.start(1000)  # Start the timer
+       self.setGeometry(300, 300, 300, 200)
+       self.setWindowTitle('Alarm Clock')
+       self.show()
+
+
+    def set_alarm(self):
+        self.alarm_time = self.time_edit.text()  # Set the alarm time to the text entered in the time_edit widget
+        self.timer.start(1000)  # Start the timer
+
+    def clear_alarm(self):
+    # Stop the alarm sound
+       self.sound.stop()
+
+    # Reset the alarm time
+       self.alarm_time = None
+       messagebox.showinfo("Alarm","Alarm Stopped") 
+
+    # Disable the clear and snooze buttons
+       self.clear_button.setEnabled(False)
+       self.snooze_button.setEnabled(False)
+
+    # Clear the time edit field
+       self.time_edit.clear()
+
+
+    def snooze(self):
+        self.sound.stop()
+        self.alarm_time = (datetime.now() + timedelta(minutes=10)).strftime('%H:%M')  # Set the alarm time to the current time plus 10 minutes
+        self.timer.start(1000)  # Start the timer
+        self.snooze_button.setEnabled(False)  # Disable the snooze button
+        messagebox.showinfo("Alarm","Alarm Snoozed For 10 Minutes") 
+        if self.alarm_time:  # Check if the alarm time has been set
+            current_time = datetime.now().strftime('%H:%M')
+            if current_time == self.alarm_time:  # Check if the current time matches the alarm time
+                self.timer.stop()
+                self.alarm_time = None
+                self.snooze_button.setEnabled(True)
+                self.sound.play()
+
+
+
+
+    def check_alarm(self):
+        if self.alarm_time:  # Check if the alarm time has been set
+            current_time = datetime.now().strftime('%H:%M')
+            if current_time == self.alarm_time:  # Check if the current time matches the alarm time
+                self.timer.stop()
+                self.alarm_time = None
+                self.snooze_button.setEnabled(True)
+                self.sound.play()
+                messagebox.showinfo("Alarm","Wake Up!")  
+                
+
+               
+                
+def main():
+    app = QApplication(sys.argv)
+    alarm_clock = AlarmClock()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
+
+
